@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from .database import init_db
 from .models import User, Item
-from .routers import users, auth
+from .routers import users, auth_router
 
 app = FastAPI()
 
@@ -12,7 +12,7 @@ def on_startup():
 
 # Incluir rutas
 app.include_router(users.router)
-app.include_router(auth.router)
+app.include_router(auth_router.router)
 
 
 @app.get("/")
