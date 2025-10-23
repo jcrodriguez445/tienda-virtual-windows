@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from .database import init_db
-from .models import User, Item
-from .routers import users, auth_router
+from .models import User, Product  # ✅ corregido: antes decía Item
+from .routers import users, auth_router, products
 
 app = FastAPI()
 
@@ -13,8 +13,9 @@ def on_startup():
 # Incluir rutas
 app.include_router(users.router)
 app.include_router(auth_router.router)
-
+app.include_router(products.router)
 
 @app.get("/")
 def read_root():
     return {"message": "Base de datos inicializada y servidor corriendo correctamente."}
+

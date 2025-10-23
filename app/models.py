@@ -2,27 +2,32 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 
+# ======================================================
+# 👤 Modelo Usuario
+# ======================================================
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(index=True, unique=True)
     hashed_password: str
     is_superuser: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    role: str = Field(default="client")  # "admin" o "client"
 
-    # 👇 NUEVO: campo de rol
-    role: str = Field(default="client")  # puede ser "admin" o "client"
+    # Relación con productos
+    products: List["Product"] = Relationship(back_populates="owner")
 
-    # Relación con los ítems (uno a muchos)
-    items: List["Item"] = Relationship(back_populates="owner")
-
-class Item(SQLModel, table=True):
+# ======================================================
+# 🛍️ Modelo Producto / Objeto Virtual
+# ======================================================
+class Product(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    title: str
+    name: str
     description: Optional[str] = None
     price: float
+    quantity: int = Field(default=0)
     image_path: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
 
-    # Relación inversa (dueño del item)
-    owner: Optional[User] = Relationship(back_populates="items")
+    # Relación con el usuario dueño
+    owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    owner: Optional[User] = Relationship(back_populates="products")
