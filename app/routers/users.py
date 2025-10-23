@@ -5,6 +5,8 @@ from ..database import get_session
 from ..models import User, AuditLog
 from ..auth import hash_password
 from .auth_router import get_current_user  # Para verificar rol
+from ..models import Product  # ✅ Agregar Product a los imports si no está
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -97,3 +99,27 @@ def delete_user(
     session.delete(user)
     session.commit()
     return {"message": f"Usuario '{user.username}' eliminado correctamente"}
+
+    # ======================================================
+# 👤 VER PRODUCTOS DE UN USUARIO ESPECÍFICO
+# ======================================================
+@router.get("/{user_id}/products", response_model=List[Product])
+def get_user_products(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtiene todos los productos de un usuario específico"""
+    # Verificar que el usuario existe
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Solo admin puede ver productos de otros usuarios, usuarios normales solo los suyos
+    if current_user.role != "admin" and current_user.id != user_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="No tienes permisos para ver productos de otros usuarios"
+        )
+    
+    return user.products  # ✅ Esto funciona gracias a la Relationship en el modelo

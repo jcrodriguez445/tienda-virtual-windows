@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from .database import init_db
 from .models import User, Product, AuditLog # ✅ corregido: antes decía Item
-from .routers import users, auth_router, products, audit
+from .routers import users, auth_router, products, audit, stats
 
 app = FastAPI()
 
@@ -15,6 +15,7 @@ app.include_router(users.router)
 app.include_router(auth_router.router)
 app.include_router(products.router)
 app.include_router(audit.router)
+app.include_router(stats.router) 
 
 @app.get("/")
 def read_root():

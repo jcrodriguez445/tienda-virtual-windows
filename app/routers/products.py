@@ -108,3 +108,26 @@ def delete_product(
     db.delete(product)
     db.commit()
     return {"message": f"Producto '{product.name}' eliminado exitosamente"}
+
+    # ======================================================
+# 🔍 VER INFORMACIÓN DEL DUEÑO DE UN PRODUCTO
+# ======================================================
+@router.get("/{product_id}/owner")
+def get_product_owner(
+    product_id: int,
+    db: Session = Depends(get_session)
+):
+    """Obtiene información del usuario dueño de un producto"""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    if not product.owner:
+        return {"message": "Este producto no tiene dueño asignado"}
+    
+    return {
+        "owner_id": product.owner.id,
+        "owner_username": product.owner.username,
+        "owner_role": product.owner.role,
+        "owner_created_at": product.owner.created_at
+    }
