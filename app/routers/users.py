@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List
 from ..database import get_session
-from ..models import User
+from ..models import User, AuditLog
 from ..auth import hash_password
 from .auth_router import get_current_user  # Para verificar rol
 
@@ -69,7 +69,7 @@ def update_user(
     session.refresh(user)
     return user
 
-# Eliminar usuario (solo admin)
+# Eliminar usuario (solo admin) - CON HISTORIAL
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
@@ -84,6 +84,16 @@ def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+    # 🔥 REGISTRAR EN HISTORIAL ANTES de eliminar
+    audit_log = AuditLog(
+        action="DELETE_USER",
+        target_id=user_id,
+        target_name=user.username,
+        performed_by=current_user.username,
+        details=f"Usuario '{user.username}' (Rol: {user.role}) eliminado por {current_user.username}"
+    )
+    session.add(audit_log)
+    
     session.delete(user)
     session.commit()
     return {"message": f"Usuario '{user.username}' eliminado correctamente"}

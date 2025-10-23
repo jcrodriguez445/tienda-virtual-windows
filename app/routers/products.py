@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_session
-from ..models import Product, User
+from ..models import Product, User, AuditLog
 from ..routers.auth_router import get_current_user  # para saber quién está logueado
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -80,7 +80,7 @@ def update_product(
 
 
 # ======================================================
-# 🔴 Eliminar producto (solo admin)
+# 🔴 Eliminar producto (solo admin) - CON HISTORIAL
 # ======================================================
 @router.delete("/{product_id}")
 def delete_product(
@@ -95,6 +95,16 @@ def delete_product(
     if not product:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
+    # 🔥 REGISTRAR EN HISTORIAL ANTES de eliminar
+    audit_log = AuditLog(
+        action="DELETE_PRODUCT",
+        target_id=product_id,
+        target_name=product.name,
+        performed_by=current_user.username,
+        details=f"Producto '{product.name}' (Precio: ${product.price}, Cantidad: {product.quantity}) eliminado por {current_user.username}"
+    )
+    db.add(audit_log)
+    
     db.delete(product)
     db.commit()
     return {"message": f"Producto '{product.name}' eliminado exitosamente"}
